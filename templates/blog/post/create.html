@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Register
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-8">
+			<div class="card my-4 border border-dark ">
+				<div class="card-body">
+					<h2 class="card-title card-h">Create post</h2>
+                    <form class="form" method="POST">{% csrf_token %}
+                        <!-- All required | Name fields are used in the backend -->
+                        <input type="text" name="title" id="input_post_title" class="form-control m-2" placeholder="Post title" required autofocus>
+
+                        <div class="form-group">
+						  <small>Introduction (optional)</small>
+						  <textarea class="form-control" name="intro" id="input_intro" rows="3"></textarea>
+						</div>
+
+                        <div class="form-group">
+						  <small>Content</small>
+						  <textarea class="form-control" name="content" id="input_content" rows="3" required></textarea>
+						</div>
+
+						<label for="id_draft" class="form-check-label m-1">Draft:</label>
+						<input class="m-1" type="checkbox" name="draft" id="input_draft" checked>
+						<hr>
+                    	<ul class="list-unstyled mb-0">
+                            <li>Teachers:<input class="m-1" type="checkbox" name="teachers" id="input_teachers" {% if post.teachers %}checked{% endif %}></li>
+                            <li>Grade:<input class="m-1" type="checkbox" name="grade" id="input_grade" {% if post.grade %}checked{% endif %}></li>
+                            <li>Sport:<input class="m-1" type="checkbox" name="sport" id="input_sport" {% if post.sport %}checked{% endif %}></li>
+                            <li>Stream:<input class="m-1" type="checkbox" name="stream" id="input_stream" {% if post.stream %}checked{% endif %}></li>
+                            <li>Club:<input class="m-1" type="checkbox" name="club" id="input_club" {% if post.club %}checked{% endif %}></li>
+                        </ul>
+                        <!-- START Error handling -->
+                        {% for field in form %}
+                            <p>
+                            {% for error in field.errors %}
+                            <p style="color: red">{{ error }}</p>
+                            {% endfor %}
+                            </p>
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                            <div style="color: red">
+                                <p>{{form.non_field_errors}}</p>
+                            </div>
+                        {% endif %}
+                        <!-- END Error handling -->
+
+                        <button type="submit" class="btn btn-primary m-2 btn-block">Post</button>
+                    </form>
+                </div>
+                <div class="card-footer text-muted">
+					<button class="btn btn-primary" type="button"><a href="{% url 'home' %}" class="text-light">HOME</a></button>
+                </div>            
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- END Form -->
+{% endblock content %}

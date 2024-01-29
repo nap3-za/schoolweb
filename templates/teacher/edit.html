@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-7">
+			<div class="card my-4 border border-dark ">
+				<div class="card-body">
+					<h2 class="card-title card-h">Update Teacher details</h2>
+					<form method="POST">{% csrf_token %}
+
+							<div class="form-group">
+								<label for="id_stream">Stream choice 1</label>
+								<select name="stream1" id="id_stream" class="form-control" required>
+									<option value="{{ teacher_account.stream1 }}">{{ teacher_account.stream1}}</option>
+									<option value="None">None</option>
+									<option value="Technical stream 2">Technichal stream 2</option>
+									<option value="Technical stream 1">Technichal stream 1</option>
+									<option value="Commerce">Commerce</option>
+									<option value="Science">Science</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="id_stream">Stream choice 2</label>
+								<select name="stream2" id="id_stream" class="form-control" required>
+									<option value="{{ teacher_account.stream2 }}">{{ teacher_account.stream2}}</option>
+									<option value="None">None</option>
+									<option value="Technical stream 2">Technichal stream 2</option>
+									<option value="Technical stream 1">Technichal stream 1</option>
+									<option value="Commerce">Commerce</option>
+									<option value="Science">Science</option>
+								</select>
+							</div>
+
+
+							<div class="form-group">
+								<label for="id_sport" class="label">Sport</label>
+								<select name="sport" id="id_sport" class="form-control">
+								<option value="{{ teacher_account.sport }}">{{ teacher_account.sport }}</option>
+									<option value="None">None</option>
+									<option value="Chess">Chess</option>
+									<option value="Tennis">Tennis</option>
+									<option value="Soccer">Soccer</option>
+									<option value="Netball">Netball</option>
+
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="id_subject1" class="label">Subject 1</label>
+								<select name="sub1" id="id_subject1" class="form-control">
+								<option value="{{ teacher_account.sub1 }}">{{ teacher_account.sub1 }}</option>
+									<option value="Information technology">Information technology</option>
+									<option value="Technical science">Technical science</option>
+									<option value="Business studies">Business studies</option>
+									<option value="Life orientation">Life orientation</option>
+									<option value="Accounting">Accounting</option>
+									<option value="Life science">Life science</option>
+									<option value="Sepedi">Sepedi</option>
+									<option value="Maths">Maths</option>
+									<option value="English">English</option>
+									<option value="None">None</option>
+									<option value="Physical science">Physical science</option>
+									<option value="Electronics">Electronics</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="id_subject2" class="label">Subject 2</label>
+								<select name="sub2" id="id_subject2" class="form-control">
+								<option value="{{ teacher_account.sub2 }}">{{ teacher_account.sub2 }}</option>
+									<option value="None">None</option>
+									<option value="Information technology">Information technology</option>
+									<option value="Technical science">Technical science</option>
+									<option value="Business studies">Business studies</option>
+									<option value="Life orientation">Life orientation</option>
+									<option value="Accounting">Accounting</option>
+									<option value="Life science">Life science</option>
+									<option value="Sepedi">Sepedi</option>
+									<option value="Maths">Maths</option>
+									<option value="English"></option>
+									<option value="">English</option>
+									<option value="Physical science">Physical science</option>
+									<option value="Electronics">Electronics</option>
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="id_subject3" class="label">Subject 3</label>
+								<select name="sub3" id="id_subject3" class="form-control">
+								<option value="{{ teacher_account.sub3 }}">{{ teacher_account.sub3 }}</option>
+									<option value="Information technology">Information technology</option>
+									<option value="Technical science">Technical science</option>
+									<option value="Business studies">Business studies</option>
+									<option value="Life orientation">Life orientation</option>
+									<option value="Accounting">Accounting</option>
+									<option value="Life science">Life science</option>
+									<option value="Sepedi">Sepedi</option>
+									<option value="Maths">Maths</option>
+									<option value="English"></option>
+									<option value="">English</option>
+									<option value="Physical science">Physical science</option>
+									<option value="Electronics">Electronics</option>
+									<option value="None">None</option>
+								</select>
+							</div>
+
+
+
+						
+
+						{% for field in form %}
+							<p>
+							{% for error in field.errors %}
+								<p style="color: red">{{ error }}</p>
+							{% endfor %}
+							</p>
+						{% endfor %}
+
+
+						{% if form.non_field_errors %}
+							<div style="color: red">
+								<p>{{ form.non_field_errors }}</p>
+							</div>
+						{% endif %}
+						<br>
+						<button class="btn btn-primary m-2">Save</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+

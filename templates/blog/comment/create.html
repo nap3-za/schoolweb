@@ -1,0 +1,32 @@
+
+<script type="text/javascript">
+	function addComment(post_id, comment) {
+	    post_id = post_id
+
+		var url = "{% url 'add_comment' post_id=post.id %}"
+		console.log('[+] Post id :'+post_id)
+
+		payload = {
+		    "csrfmiddlewaretoken": "{{ csrf_token }}",
+		    "data": comment,
+		    "post_id": post_id,
+		}
+		$.ajax({
+			type: 'POST',
+			dataType: "json",
+			url: url,
+			timeout: 5000,
+			data: payload,
+			success: function(data) {
+				console.log("SUCCESS", data)
+			},
+			error: function(data) {
+				console.error("ERROR...", data)
+				console.log(data['response'])
+			},
+			complete: function(data){
+                location.reload()
+			}
+		});
+	}
+</script>

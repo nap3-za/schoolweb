@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-7">
+			<div class="card my-4 border border-dark ">
+				<div class="card-body">
+					<h2 class="card-title card-h">Update account</h2>
+					<form method="POST">{% csrf_token %}
+
+						<label for="id_email" class=>Email:</label>
+						<input class="form-control" type="email" name="email" maxlength="60" required="" id="id_email" value="{{base_account.email }}">
+
+						<label for="id_username" class="label">Username:</label>
+						<input class="form-control" type="text" name="username" maxlength="255" required="" id="id_username" value="{{ base_account.username }}">
+
+						<label for="id_name" class="label">Name:</label>
+						<input class="form-control" type="text" name="name" maxlength="255" required="" id="id_name" value="{{ base_account.name }}"> 
+
+						<label for="id_surname" class="label">Surname:</label>
+						<input class="form-control" type="text" name="surname" maxlength="255" required="" id="id_surname" value="{{ base_account.surname }}"> 
+
+
+						<label for="id_phone_no" class="label">Phone_no:</label>
+						<input class="form-control" type="number" name="phone_no" required id="id_phone_no" value="{{ base_account.phone_no }}"> 
+
+
+						<label for="id_hide_email" class="form-check-label m-1"> Hide email: </label>
+						<input class="m-1" type="checkbox" name="hide_email" id="id_hide_email" {% if base_account.hide_email %}checked{% endif %}>
+						
+						{% for field in form %}
+							<p>
+							{% for error in field.errors %}
+								<p style="color: red">{{ error }}</p>
+							{% endfor %}
+							</p>
+						{% endfor %}
+
+
+						{% if form.non_field_errors %}
+							<div style="color: red">
+								<p>{{ form.non_field_errors }}</p>
+							</div>
+						{% endif %}
+						<br>
+						<button class="btn btn-primary m-2">Update</button>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+

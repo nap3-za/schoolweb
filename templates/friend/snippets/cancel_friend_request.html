@@ -1,0 +1,39 @@
+
+
+<script type="text/javascript">
+	
+	function cancelFriendRequest(id, uiUpdateFunction){
+		payload = {
+			"csrfmiddlewaretoken": "{{ csrf_token }}",
+			"receiver_user_id": id,
+		}
+		$.ajax({
+			type: 'POST',
+			dataType: "json",
+			url: "{% url 'cancel_request' %}",
+			data: payload,
+			timeout: 5000,
+			success: function(data) {
+				console.log("SUCCESS", data['response'])
+			},
+			error: function(data) {
+				console.error("ERROR...", data['response'])
+			},
+			complete: function(data){
+				uiUpdateFunction()
+			}
+		});
+	}
+	
+
+</script>
+
+
+
+
+
+
+
+
+
+

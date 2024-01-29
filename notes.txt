@@ -1,0 +1,19 @@
+
+** Use related_name instead of verbose_name when dealing with relationship fields
+
+** Friend system template logic **
+
+is_self == TRUE				
+	is_self = True			[1]
+
+is_self == FALSE
+	
+	is_FRIEND == TRUE
+		is_friend = TRUE	[2]
+
+	is_friend == FALSE		
+		request_sent = -1	[3]
+		request_sent = 0	[4]
+		request_sent = 1	[5]
+
+

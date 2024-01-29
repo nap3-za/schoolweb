@@ -1,0 +1,291 @@
+Staticfiles
+    settings.py
+    urls.py
+    Collect the static
+Templates
+User model
+    Import the ABU and BM
+    Dont forget vname
+    Overide the has_perm, has_module_perms functions 
+    Tie the model with the manager
+
+.0 is the account and .1 is the boolean
+
+User model manager
+    overide the following (they take the password as none)
+        createuser
+            Create some checks
+            Create the user
+            Save in a special way
+        createsuperuser
+            same as create user 
+
+Admin panel
+    Import useradmin that will be an argument to the class
+    Create a class and overide some things
+        FH
+        LF
+        RF
+        FS
+    
+    Register the admin
+Custom backend for model
+    Create a backends.py file
+        Create a CaseInsensetiveModelBackend class
+            overide authenticate
+                # Model backend
+
+                class CaseInsensetiveModelBackend(ModelBackend):
+                    # Default = None
+                    def authenticate(self, request, username=None, password=None, **kwargs)
+                        
+                        user_m = get_user_model()
+                        if username == None:
+                            # Getting it from the USERNAME_FIELD specified in models.py
+                            username = kwargs.get(user_m.USERNAME_FIELD)
+                        
+                        try:
+                            case_insensetive_username_field = '{}__iexact'.format(user_m.USERNAME_FIELD)
+                            # Getting the user using the case_insensetive_username_field72
+                            user = user_m._default_manager.get(**{case_insensetive_username_field: username})
+                        except user_m.DoesNotExist:
+                            # Create a new one
+                            user_m().set_password(password)
+                        
+                        else:
+                            if user.check_pasword(password) and self.user_can_authenticate(user):
+                                return user
+Register
+    Template
+		{% for field in registration_form %}
+		<p>
+		{% for error in field.errors %}
+		<p style="color: red">{{ error }}</p>
+		{% endfor %}
+		</p>
+		{% endfor %}
+		{% if registration_form.non_field_errors %}
+		<div style="color: red">
+			<p>{{registration_form.non_field_errors}}</p>
+		</div>
+
+		{% endif %}
+    
+    View
+        save and login the user
+
+    Form backend
+        Use the usercreation form or buid your own
+        
+        Hack
+        def clean_rep(self):
+            rep = self.cleaned_data['rep']
+            try:
+                account = Account.objects.get(rep=rep)
+            except Exception as e:
+                return rep
+            raise forms.ValidationError(f"rep {rep} is already in use")
+    View
+        Login and authenticate the user
+        Form.save() to create the new user since we are using a usercreation form that comes with django
+    Url
+        don't forget the name
+
+Login
+    Template
+        Include the error handling code
+    Form backend
+        Not using a prebuilt form
+        The email is not special
+        Clean the whole thing in one go
+        request.POST['another way of getting the post data']
+        You can also use form.save()
+    View
+        Use authenticate to checks
+Logout 
+	else:
+		form = RegisterForm()
+		context['register_form']
+    Takes request
+    Always check if the request is post and the user is authenticated
+
+Password reset (development)
+    Templates
+        names of the inputs shouldn't change
+            change
+            change done
+            reset email
+            reset form
+            reset done
+            reset subject
+            reset complete
+            reset
+    Views
+        Import pre-built views from django.contrib.auth views
+        # Password reset links (ref: https://github.com/django/django/blob/master/django/contrib/auth/views.py)
+        path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='password_reset/password_change_done.html'), 
+            name='password_change_done'),
+
+        path('password_change/', auth_views.PasswordChangeView.as_view(template_name='password_reset/password_change.html'), 
+            name='password_change'),
+
+        path('password_reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset/password_reset_done.html'),
+        name='password_reset_done'),
+
+        path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+        path('password_reset/', auth_views.PasswordResetView.as_view(), name='password_reset'),
+        
+        path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='password_reset/password_reset_complete.html'),
+        name='password_reset_complete'),
+
+    Settings
+        if DEBUG:
+            EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    
+    This will change in production
+
+User screen (before friend sys)
+    Template with if else statements
+        Different kinds of states 
+        Mainly 5
+    View
+        '''
+        is_self(boolean)
+            is_friend (boolean)
+                -1 : NO REQUEST SENT
+                0  : THEM SENT TO YOU
+                1  : YOU SENT TO THEM 
+        '''
+        You get the id from the url
+        pass in the BASE_URL in the context
+        set the logic values base on the authenticated user values
+    URL
+    Change the template links and use the request's user id
+User search
+
+    Template
+        Display buttons according to the 5 states
+        Looping through the qs of the users
+    
+    View
+        The method of the form is GET since we are sending/receiving non-important data
+        get the q from the url
+        icontains means dont mind the uppercase
+        The distinct method eliminate duplicates
+        Loop through the qs and append the is_friend value
+
+    Template
+        Add the form
+        Add a executeQuery js functionality in the form that has the search box
+
+        function executeQuery() {
+            var query
+            query = document.getElementById("id_input_field").value
+            # This will  change the url 
+            window.location.replace("{% url 'url' %}?q=" + query)
+        }
+
+User update
+
+    Template 
+        Must have the fields populated on-load(get)
+    Form
+        normal form
+        ovveride the save function
+        we are in the meta
+        we are in the model form
+
+Friend feature
+    A feature
+    Model 
+        Friend list & friend request tables
+            A friend_lists should be generated everytime an account is created
+        Some useful functions
+            add
+            remove
+            un
+            mutual
+
+            cancel
+            add
+            decline
+    Admin
+        each table each admin
+
+User screen (with 5 states)
+
+    is_self == 1            # State 1
+    
+    is_self == 0    
+        is_friend == 1      # state 2
+        is_friend == 0      
+            NO REQUEST      # State 3
+            YOU TO THEM     # State 4
+            THEM TO YOU     # State 5
+
+    Create a utils.py file for geting the friend request (an enum)
+    Create a friend request status file for returning values
+    Edit the account view to set the template variables
+
+Send friend request
+    Ajax to send asychronus requests withoute refreshing the password_change
+    We can only send strings back and forth using json through http responses
+    View
+        check if method is post
+        check if the post_user_id exists (received from the payload)
+        try grtting the rqs i sent to the receiver
+        try looping throught the rqs and telling the user if there are any active ones
+        create rq if it does not exist
+
+        return the result as a payload response
+        return the Httpresponse with the json.dumps and content_type="application/json"
+    
+    Ajax
+        create a function
+            define the payload TO the view
+                token
+                user_id
+            define the Ajax
+                type / method
+                data
+                dataType
+                timeout (in ms)
+                url
+                success
+                error
+                complete
+            update the add friend buttons
+
+Querying friend requests
+
+    View
+        check uthenticated
+        check if they are allowed to view 
+        return the friend requests if allowed
+        
+Accept/Declining/Sending/Cancelling/Removing friend request (AJAX REQUESTS)
+    
+    View
+        define the payload and the auth_user
+        try if the method is post because we are accepting
+        get the request id from the url
+        check if the auth_user is the receiver and accept/decline
+
+    Template
+        define the payload if the request post
+        the payload should have the csrf and the receiver user id
+        post == csrf , payload , secure
+        get != csrf , payload , unsecure
+
+    USE POST WHEN WORKING WITH USER IDs
+
+Friend list query
+
+    Create the view 
+        is friend , is athenticated , does the account exist etc
+        create an empty list and append the account and the boolean field
+        append the account and if the boolean
+        pass it in the context
+        .0 is the account .1 is the boolean value
+
+

@@ -1,0 +1,2032 @@
+Firstly create a python3 enviroment
+Create a django project
+    install (
+        django LTS,
+        pillow,
+        psycopg2,
+        django-heroku,
+        django-channels,
+        gunicorn
+    )
+
+SET UP postgresql
+        create a user called django
+        create a database for your webapp
+        grant all perms to the user django
+    Add the following code to settings.py to link your database
+
+    # name of the database
+    DB_NAME = "chattapp"
+
+    # name of the user in postgresql
+    DB_USER = "django"
+
+    #password of the user in postgresql
+    DB_PASSWORD = "password"
+
+    # databases
+    DATABASES = {
+        'default': {
+            # specify the engine
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+
+            # your database details
+            'NAME': DB_NAME,
+            'USER': DB_USER,
+            'PASSWORD': DB_PASSWORD,
+
+            # host and the port number
+            'HOST': 'localhost',
+
+            # default port used by postgresql
+            'PORT': '5432',
+            }
+        }
+
+
+    Migrate to commit changes to database (delete the sqlite database if present)
+    Create a superuser
+
+Install redis to send payloads and use sockets(download meurai for windows)
+
+Config django to tell django that you are using redis
+
+    CHANNEL_LAYERS = {
+        'default' = {
+            'BACKEND': 'channels_redis.core.RedisChannelLayer',
+            'CONFIG': {
+
+                "hosts": ['127.0.0.1', 6379]
+            }
+        }
+    }
+
+
+Set up your templates
+    Create a templates folder
+    Tell django that you are using the templates folder
+    In dirs add thr following code
+        os.path.join(BASE_DIR, "templates")
+
+    In templates
+        create a base.html
+        create a folder for the home.html
+
+    Create an app(feature) for views that have no home.html
+        python3 manage.py startapp nodisc
+
+    Add it to the installed apps in settings.py
+
+    Create a view for the home page
+
+    Set up the apps urls
+        add the following code to the root url filesizeformat
+            path('', include(Appname.urls))
+
+    Create urls.py in your app
+
+    Add a url for the view
+
+Set up static files
+
+    Create the following folders(
+        # this is where you put your media
+        media,
+        # this is where you put your static files(bootstrap)
+        static,
+        # this folder will be on a server to host the static files(create it for dev purposes)
+        # these files in the media and static will be moved to the server (aws)
+        media_cdn/temp,
+        static_cdn
+    )
+
+    Tell django to use staticfiles
+
+        STATICFILES_DIRS = [
+            os.path.join(BASE_DIR, 'static'),
+            os.path.join(BASE_DIR, 'media')
+        ]
+        MEDIA_URL = '/media/'
+        STATIC_URL = '/static/'
+
+        # setup for aws
+        STATIC_ROOT = os.path.join(BASE_DIR, 'static_cdn')
+        MEDIA_ROOT = os.path.join(BASE_DIR, 'media_cdn')
+
+        # will be used when cropping the profile image
+        TEMP = os.path.join(BASE_DIR, 'media_cdn/temp')
+
+    Configure the urls to tell django where they are
+        if settings.DEBUG:
+            urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+            urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    Collect static
+        python3 manage.py collectstatic
+
+    Include them in your html files
+    {% load static %}
+    href="{% static 'dir/js.js' %}"
+
+Create a custom user model
+
+    Start a new app called accoutn/profile
+    Add it to the installed apps
+
+    Open models.py to set up the model
+    Import the AbstractBaseUser and BaseUserManager
+
+    Crate a class and ref the AbstractBaseUser
+        Add fields (
+            email,
+            username,
+            date_joined,
+            last_login,
+            # boolean fields
+            # we are overiding the fields from the base user class
+            is_admin,
+            is_staff,
+            is_active,
+
+            profile_img(upload_to, null=True, blank=True, default=)
+            hide_email
+
+            # this field will be used to login
+            USERNAME_FIELD = 'email'
+            REQUIRED_FIELDS = ['username']
+
+            def __str__(self):
+                return self.username
+
+        # functions to be overriden
+            def has_perm(self, perm, obj=None):
+                return self.is_admin
+            def has_module_perms(self, app_Label):
+                return True
+
+        # this will rename the profile pic name
+        def get_profile_image_filename(self):
+            return str(self.profile-image)[str(self.profile_image).index(f"profile_images/{self.pk}/")]
+        )
+
+    # profile image setup
+    # add these on top of the user class
+
+    def get_profile_image_filepath(self):
+        return f'profile_images/{self.pk}/{"profile_image.png"}'
+
+    def get_default_profile_image():
+        # this pic is stored in the static_cdn
+        return "default.png"
+
+    Set (
+        upload_to=get_profile_image_filepath, 
+        default=get_default_profile_image
+    )
+
+
+#  OVERRIDE THE CREATE USER FUNCTION
+    class MyAccountManager(BaseUserManager):
+        def create_user(self, email, username, password=None)
+            if not email:
+                raise ValueError("users must have emil")
+
+            if not user:
+                raise ValueError("users must have user")
+
+            user = self.model(
+                email = self.normailze_email(email),
+                username = username,
+            )
+            user.set_password(password)
+            user.save(using=self._db)
+            return user
+
+    #  OVERRIDE THE CREATE SUPER USER FUNCTION
+
+    def create_superuser(self, email, username, password):
+        user = self.create_user(
+            email = self.normailze_email(email),
+            username = username,
+            password = password,
+        )
+        user.is_admin = True,
+        user.is_staff = True,
+        user.is_superuser = True
+        user.save(using=self._db)
+        return user
+
+
+
+
+
+
+.
+
+
+Add:
+   objects = MyAccountManager()
+to tie the manager with the model
+
+Push all the changes to the databases
+
+Add:
+    # this tells django that the model for authentication is the new model
+    AUTH_USER_MODEL = "account.Account"
+
+
+SET UP THE ADMIN PANEL
+
+    # import your model
+    from django.contrib.auth.admin import UserAdmin
+    # Register your models here.
+
+    class AccountAdmin(UserAdmin):
+        # this will display info about the object
+        list_display = ('email', 'username', 'date_joined', 'last_login', 'is_admin')
+
+        # fields to used when searching
+        search_fields = ('email', 'username')
+
+        # fields to
+        readonly_fields = ('id', 'date_joined', 'last_login')
+        filter_horizontal = ()
+        list_filter = ()
+        fieldsets = ()
+    admin.site.register(Account, AccountAdmin)
+
+Create a new file called backends.py and config it
+
+    from django.contrib.auth import get_user_model
+    from django.contrib.auth.backends import ModelBackend
+
+    class CaseInsensetiveModelBackend(ModelBackend):
+
+        # overiding the authenticate function
+        def authenticate(self, request, username=None, password=None, **kwargs):
+            UserModel = get_user_model()
+            if username == None:
+                username = kwargs.get(UserModel.USERNAME_FIELD)
+            try:
+                case_insensitive_username_field = '{}__iexact'.format(UserModel.USERNAME_FIELD)
+                user = UserModel._default_manager.get(**{case_insensitive_username_field: username})
+            except UserModel.DoesNotExist:
+                UserModel().set_password(password)
+            else:
+                if user.check_password(password) and self.user_can_authenticate(user):
+                    return user
+
+    Add to settings.py:
+        AUTHENTICATION_BACKENDS = (
+            # this tells django that we want to use our own backend authentication for the account model
+            'django.contrib.auth.backends.AllowAllUserBackend'
+            'account.backends.CaseInsensitiveModelBakcend',
+                    )
+
+
+
+.
+
+Registration
+
+    create a reg.html file
+    create form 
+    add some validation
+        {% for field in reg_form %}
+        <p>
+        {% for error in field.errors %}
+        <p style="color: red">{{ error }}</p>
+        {% endfor %}
+        </p>
+        {% endfor %}
+        {% if reg_form.non_field_errors  %}
+        <div style="color: red">
+        <p style="color: red">{{ reg_form.non_field_errors }}</p>
+        </div>
+        {% endif %}
+
+    create a new file forms.py
+        from django import forms
+        from django.contrib.auth.forms import UserCreationForm
+        from .models import Account
+
+        class RegForm(UserCreationForm):
+            email = forms.EmailField(max_length=100, help_text="Required")
+
+            class Meta:
+                model = Account
+                fields = ('email', 'username', 'password1', 'password2')
+
+            def clean_email(self):
+                email = self.cleaned_data['email'].lower()
+                try:
+                    account = Account.objects.get(email=email)
+                except Exception as e:
+                    return email
+                raise forms.ValidationError(f"email {email} is in use")
+                
+
+            def clean_username(self):
+                username = self.cleaned_data['username']
+                try:
+                    account = Account.objects.get(username=username)
+                except Exception as e:
+                    return username
+                raise forms.ValidationError(f"username {username} is in use")
+
+        SET UP THE view
+
+            def RegView(request, *args, **kwargs):
+                # raise an error if the user is already authentiated
+                user = request.user
+                if user.is_authenticated:
+                    return HttpResponse(f"<h3>YOU ARE AUTHENTICATED AS {user.email}.")
+
+                context = {}
+
+                if request.POST:
+                    form = RegForm(request.POST)
+                    if form.is_valid():
+                    # this will create the user
+                        form.save()
+                        email = form.cleaned_data.get('email').lower()
+                        username = form.cleaned_data.get('username')
+                        password = form.cleaned_data.get('password1')
+                        user_acc = authenticate(email=email, password=password)
+                        
+                        # login the user
+                        login(request, user_acc)
+                        destination = kwargs.get("next")
+                        if destination:
+                            return redirect("homeview")
+                        return redirect("homeview")
+
+                    else:
+                        context['reg_form'] = form
+
+                return render(request, "account/reg.html", context)
+        
+        Create a url for the view
+
+
+.
+LOGIN AND LOGOUT
+
+    create a login.html
+    create a form for it 
+    inherits forms.ModelForm
+
+    Add the following code:
+    def get_redirect_if_exists(request):
+    redirect = None
+    if request.GET:
+        if request.GET("next"):
+            return redirect(str(request.GET.get("next")))
+
+    return redirect
+
+    
+.
+RESET PASSWORD (IN DEV)
+
+    create the following html files
+        change (password updating  form)
+        change_done (shown when the password update was successfull)
+        reset (form with email input only)
+        reset_complete (shown when reset is complete)
+        reset_done (to show that the instructions were sent to the email they entered on the change form)
+        reset_email (the contents of the email to be sent)
+            (copy and paste)
+            {% autoescape off %}
+            To initiate the password reset process for your account {{ user.email }},
+            click the link below
+
+            {{ protocol }}://{{ domain }}{% url 'reset_confirm' uidb64=uid token=token %}
+
+            If clicking the link above doesn't work, please copy and paste the URL in a new browser window instead
+
+            Sincerely,
+            The Open-Chat Team
+            {% endautoescape %}
+
+        reset_subject (Open chat password reset)
+
+    in urls.py import auth_views from auth and copy and paste
+
+        path('password_change/done/', auth_views.PasswordChangeDoneView.as_view(template_name='account/password-reset/change_done.html'),
+            name='password_change_done'),
+        path('password_change/', auth_views.PasswordChangeView.as_view(template_name='account/password-reset/change.html'),
+            name='password_change'),
+
+        path('password_reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='account/password-reset/reset_done.html'),
+            name='password_change_reset_done'),
+
+        path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+        path('password_reset/', auth_views.PasswordResetView.as_view(), name="password_reset"),
+        
+        path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='account/password-reset/reset_complete.html'),
+            name='password_reset_complete'),
+
+    add the following code to run when in DEV model
+
+        if DEBUG:
+            EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+    
+    check the console and open the email reset link sent to test
+    test the update feature
+
+.
+CREATING THE USER SCREEN
+
+    THREE SCREENS
+
+        your own
+
+            <h2>My Account</h2>
+            <br>
+            <img id="profile_photo" img src="{{ request.user.profile_image.url }}" alt="profile img" height="100", width="100">
+            </center>
+            <p>Email</p>
+            {% if is_self %}
+                <h5>{{ email }}</h5>
+            {% else %}
+                {% if hide_email %}
+                <h5>************</h5>
+                {% else %}
+                <h5>{{ email }}</h5>
+                {% endif %}
+            {% endif %}
+
+            <p>Username</p>
+            <h5>{{ username }}</h5>
+
+            <!-- IF THE AUTH USER IS VIEWING THEIR OWN PROFILE -->
+
+            {% if is_self %}
+            <button class="btn btn-link" type="button"><a href="#">Update</button>
+            <button class="btn btn-link" type="button"><a href="{% url 'password_change' %}">Change password</button>
+            {% endif %}
+
+            <!-- IF THE USER IS AUTHENTICATED-->
+
+            {% if request.user.is_authenticated %}
+
+                {% if request_sent == 0 %}
+                <span class="friend-text">Accept Friend Request</span>
+
+                <span id="id_cancel_{{id}}" class="decline-friend-request" onclick='triggerDeclineFriendRequest("{{ pending_friend_request_id }}")'>cancel</span>
+
+                <span id="id_confirm_{{id}}" class="confirm-friend-request" onclick='triggerAcceptFriendRequest("{{ pending_friend_request_id }}")'>check</span>
+                {% endif %}
+
+                <!-- cancel friend request / send friend request / remove friend -->
+
+                {% if is_friend == False and is_self == False %}
+            <!-- IF YOU DID SEND THEM A FRIEND REQUEST-->
+                    {% if request_sent == 1 %}
+                    <button class="btn btn-link" type="button"><a href="">Cancel Friend Request</button>
+                    {% endif %}
+            <!-- IF YOU DIDNT SEND THEM A FRIEND REQUEST-->
+                    {% if request.sent == -1 %}
+                    <button class="btn btn-link" type="button"><a href="#">Send Friend Request</button>
+                    {% endif %}
+
+                {% endif %}
+                
+                {% if is_friend %}
+                <button class="btn btn-link friends-btn" aria-expanded="false" type="button"><a href="">Friends</button>
+                <button class="btn btn-link" type="button" onclick="removeFriend('{{id}}', onFriendRemoved)">Unfriend</button>
+                {% endif %}
+
+                <!-- friend list link -->
+
+                <a href="">
+                    <span>contact_pages</span>
+                    <span class="firend-text">Friends (0)</span>
+                </a>
+
+                {#% if friend_request %#}
+                
+                <span>person_add</span>
+                <span class="friend-text">Friend Request (0)</span>
+
+                {#% endif %#}
+
+                {% if is_friend %}
+                
+                <div onclick="createOrReturnPrivateChat('{{id}}')">
+                <span>messages</span>
+                <span>Messages</span>
+                {% endif %}
+            {% endif %}
+
+              ################################
+
+            there after create a view and get;
+                the uswr id from kwargs
+
+        others
+        friends and non-friends
+
+        *create a separate url file for the accounts app 
+        if not 
+
+        add this path
+            path('<user_id>/', MyAccView, name="accview"),
+
+
+SEARCHING USERS
+
+    Create a html file called search_rresults and add the following code:
+        <!-- This is basically exactly the same as friend_list.html -->
+
+        {% extends 'base.html' %}
+        {% load static %}
+
+        {% block content %}
+
+
+        <style type="text/css">
+            .profile-image{
+                max-height: 100px;
+                max-width: 100px;
+            }
+            .profile-image{
+                border-radius: 12px;
+            }
+            .card{
+                border-radius: 12px;
+            }
+            .friends-text{
+                color: #000;
+                font-weight: 500;
+            }
+            .friends-text-container{
+                border: 1px solid #cccccc;
+                border-radius: 12px;
+            }
+            .friends-btn:hover {
+                background-color: #bfbfbf;
+                border-color: #bfbfbf;
+            }
+            .dropdown-toggle::after { 
+                content: none; 
+            }
+            .profile-link{
+                color: #000;
+            }
+            .checkmark-icon{
+                color: green;
+            }
+            .cancel-icon{
+                color: red;
+            }
+        </style>
+
+        <div class="container">
+            <div class="card p-2">
+
+                {% if accounts %}
+                <div class="d-flex flex-row flex-wrap">
+                {% for account in accounts %}
+                <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center">
+                    <a class="profile-link" href="{% url 'accview' user_id=account.0.id %}">
+                        <div class="card-image m-2">
+                            <img class="img-fluid profile-image" src="{{account.0.profile_image.url}}" alt="">
+                        </div>
+                    </a>
+                    <a class="profile-link" href="{% url 'account:view' user_id=account.0.id %}">
+                        <div class="card-center px-2">
+                            <h4 class="card-title">{{account.0.username}}</h4>
+                            {% if account.1 %}
+                            <p class="card-text"><a href="#" onclick="createOrReturnPrivateChat('{{account.0.id}}')">Send a Message</a></p>
+                            {% endif %}
+                            
+                        </div>
+                    </a>
+                    <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-2">
+                        {% if account.1 %}
+                            <div class="d-flex flex-row friends-text-container p-3">
+                                <p class="friends-text m-auto">
+                                    Friends 
+                                </p>
+                                <span class="material-icons checkmark-icon m-auto pl-2">
+                                check_circle_outline
+                                </span>
+                            </div>
+                        {% else %}
+                            {% if account.0 !=  request.user %}
+                                <div class="d-flex flex-row friends-text-container p-3">
+                                    <p class="friends-text m-auto">
+                                        Not Friends 
+                                    </p>
+                                    <span class="material-icons cancel-icon m-auto pl-2">cancel</span>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        {% if account.0 == request.user %}
+                            <div class="d-flex flex-row friends-text-container p-3">
+                                <p class="friends-text m-auto">
+                                    This is you 
+                                </p>
+                                <span class="material-icons m-auto pl-2">
+                                person_pin
+                                </span>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if forloop.counter|divisibleby:2 %}
+                </div><div class="d-flex flex-row flex-wrap">
+                {% endif %}
+                
+                {% endfor %}
+                
+                {% else %} <!-- If no friends -->
+                <div class="d-flex flex-row flex-grow-1 justify-content-center align-items-center p-4">
+                    <p>No results</p>
+                </div>
+                {% endif %}
+                </div>
+            </div>
+            
+        </div>
+
+
+        {%  include 'chat/snippets/create_or_return_private_chat.html' %}
+
+        <script type="text/javascript">
+            function createOrReturnPrivateChat(user_id) {
+                // Just a placeholder
+            }
+        </script>
+
+        {% endblock content %}
+
+    create the view
+            def AccountSearchView(request, *args, **kwargs):
+
+            context = {}
+
+            if request.method == "GET":
+
+            #   gets the text that the user is searching for
+                    search_query = request.GET.get("q")
+            #   filters the users and gets the ones that the user is searching for
+                    if len(search_query) > 0:
+                        search_query = Account.objects.filter(email__icontains=search_query).filter(username__icontains=search_query).distinct()
+
+                        user = request.user
+            #                      [(account1, True)],   THIS is the structure of the list
+                        accounts = [
+
+                        ]
+                        for account in search_query:
+                            accounts.append((account, False))   #   This is a placeholder
+
+                        context['account'] = accounts
+
+
+                return render(request, "account/search-results.html", context)
+
+USER UPDATE 
+
+    create a html file form
+                {% extends 'base.html' %}
+            {% load static %}
+
+            {% block content %}
+
+                <div class="mb-2" id="id_image_crop_confirm">
+                    <span id="id_cancel" class="material-icons">cancel</span>
+                    <span id="id_confirm" class="material-icons">check</span>
+                </div>
+                <div>
+                    <img class="border border-dark rounded-circle img-fluid mx-auto profile-image" id="id_profile_image_display" src="{{form.initial.profile_image.url}}" alt="codingwithmitch logo">
+                    <div class="text" id="id_text">Edit</div>
+                </div>
+
+                <form class="form-signin" method="post" enctype="multipart/form-data">{% csrf_token %}
+                    <input class="d-none" type="file" name="profile_image" id="id_profile_image" onchange="readURL(this)">
+                    <h6 class="mt-4 field-heading">Email</h6>
+                    <input type="email" name="email" id="id_input_email" class="form-control" placeholder="Email address" required autofocus value={{form.initial.email}}>
+                    <h6 class="mt-4 field-heading">Username</h6>
+                    <input type="text" name="username" id="id_input_username" class="form-control" placeholder="Username" required
+                    value="{{form.initial.username}}">
+                    <div class="mt-4 checkbox">
+                    <label>
+                    <input type="checkbox" name="hide_email" id="id_input_hide_email" {% if form.initial.hide_email %}checked{%endif%}>
+                        Hide Email
+                    </label>
+                                    
+                    </div>
+
+                    {% for field in form %}
+                        <p>
+                        {% for error in field.errors %}
+                        <p style="color: red">{{ error }}</p>
+                        {% endfor %}
+                        </p>
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                        <div style="color: red">
+                        <p>{{form.non_field_errors}}</p>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-flex flex-column mt-4">
+                            <button class="mt-4 btn btn-primary flex-grow-1" type="submit">Save</button>
+                        </div>
+                                
+                </form>
+
+            <script type="text/javascript">
+
+                var cropper;
+                var imageFile;
+                var base64ImageString;
+                var cropX;
+                var cropX;
+                var cropWidth;
+                var cropHeight;
+
+                enableImageOverlay()
+
+                function enableImageOverlay(){
+                    var text = document.getElementById("id_text")
+                    text.style.backgroundColor = "#0066ff"
+                    text.style.color = "white"
+                    text.style.fontSize = "16px"
+                    text.style.padding = "16px 32px"
+                    text.style.cursor = "pointer"
+
+                    var profileImage = document.getElementById("id_profile_image")
+                    profileImage.style.opacity = "1"
+                    profileImage.style.display = "block"
+                    profileImage.style.width = "100%"
+                    profileImage.style.height = "auto"
+                    profileImage.style.transition = ".5s ease"
+                    profileImage.style.backfaceVisibility  = "hidden"
+                    profileImage.style.cursor = "pointer"
+
+                    var middleContainer = document.getElementById("id_middle_container")
+                    middleContainer.style.transition = ".5s ease"
+                    middleContainer.style.opacity = "0"
+                    middleContainer.style.position = "absolute"
+                    middleContainer.style.top = "50%"
+                    middleContainer.style.left = "50%"
+                    middleContainer.style.transform = "translate(-50%, -50%)"
+                    middleContainer.style.textAlign = "center"
+
+                    var imageContainer = document.getElementById("id_image_container")
+                    imageContainer.addEventListener("mouseover", function( event ) { 
+                        profileImage.style.opacity = "0.3"
+                        middleContainer.style.opacity = "1"
+                    })
+
+                    imageContainer.addEventListener("mouseout", function( event ) { 
+                        profileImage.style.opacity = "1"
+                        middleContainer.style.opacity = "0"
+                    })
+
+                    imageContainer.addEventListener("click", function(event){
+                        document.getElementById('id_profile_image').click();
+                    });
+
+                    var cropConfirm = document.getElementById("id_image_crop_confirm")
+                    cropConfirm.classList.remove("d-flex")
+                    cropConfirm.classList.remove("flex-row")
+                    cropConfirm.classList.remove("justify-content-between")
+                    cropConfirm.classList.add("d-none")
+                    
+                }
+
+                function disableImageOverlay(){
+                    var profileImage = document.getElementById("id_profile_image_display")
+                    var middleContainer = document.getElementById("id_middle_container")
+                    var imageContainer = document.getElementById("id_image_container")
+                    var text = document.getElementById("id_text")
+
+                    imageContainer.removeEventListener("mouseover", function( event ) { 
+                        profileImage.style.opacity = "0.3"
+                        middleContainer.style.opacity = "1"
+                    })
+
+                    imageContainer.removeEventListener("mouseout", function( event ) { 
+                        profileImage.style.opacity = "1"
+                        middleContainer.style.opacity = "0"
+                    })
+
+                    profileImage.style.opacity = "1"
+                    middleContainer.style.opacity = "0"
+                    text.style.cursor = "default"
+                    text.style.opacity = "0"
+
+                    document.getElementById('id_image_container').removeEventListener("click", function(event){
+                        event.preventDefault();
+                        // do nothing
+                    });
+                    document.getElementById('id_profile_image').addEventListener("click", function(event){
+                        event.preventDefault();
+                        // do nothing
+                    });
+
+                    var cropConfirm = document.getElementById("id_image_crop_confirm")
+                    cropConfirm.classList.remove("d-none")
+                    cropConfirm.classList.add("d-flex")
+                    cropConfirm.classList.add("flex-row")
+                    cropConfirm.classList.add("justify-content-between")
+
+                    var confirm = document.getElementById("id_confirm")
+                    confirm.addEventListener("click", function(event){
+                        console.log("Sending crop data for processing...")
+                        cropImage(
+                            imageFile, 
+                            cropX, 
+                            cropY, 
+                            cropWidth,
+                            cropHeight
+                        )
+                    })
+
+                    var cancel = document.getElementById("id_cancel")
+                    cancel.addEventListener("click", function(event){
+                        console.log("Reloading window...")
+                        window.location.reload();
+                    })
+                }
+
+                /* return null if invalid or base64String if valid */
+                function isImageSizeValid(image){
+                    console.log("max size: {{DATA_UPLOAD_MAX_MEMORY_SIZE}}")
+                    // console.log(image)
+                    var startIndex = image.indexOf("base64,") + 7;
+                    var base64str = image.substr(startIndex);
+                    var decoded = atob(base64str);
+                    console.log("FileSize: " + decoded.length);
+                    if(decoded.length>= "{{DATA_UPLOAD_MAX_MEMORY_SIZE}}"){
+                        return null
+                    }
+                    return base64str
+                }
+
+                function cropImage(image, x, y, width, height){
+                    base64ImageString = isImageSizeValid(image)
+
+                    if(base64ImageString != null){
+                        var requestData = {
+                            "csrfmiddlewaretoken": "{{ csrf_token }}",
+                            "image": base64ImageString,
+                            "cropX": cropX,
+                            "cropY": cropY,
+                            "cropWidth": cropWidth,
+                            "cropHeight": cropHeight
+                        }
+                        displayLoadingSpinner(true)
+                        $.ajax({
+                            type: 'POST',
+                            dataType: "json",
+                            url: "{% url 'account:crop_image' user_id=form.initial.id %}",
+                            data: requestData,
+                            timeout: 10000,
+                            success: function(data) {
+                                if(data.result == "success"){
+                                    document.getElementById("id_cancel").click()
+                                }
+                                else if(data.result == "error"){
+                                    alert(data.exception)
+                                    document.getElementById("id_cancel").click()
+                                }
+                            },
+                            error: function(data) {
+                                console.error("ERROR...", data)
+                            },
+                            complete: function(data){
+                                displayLoadingSpinner(false)
+                            }
+                        });
+                    }
+                    else{
+                        alert("Upload an image smaller than 10 MB");
+                        document.getElementById("id_cancel").click()
+                    }
+                }
+
+                /*
+                    Called when a new image is selected from file chooser dialog
+                */
+                function readURL(input) {
+                    if (input.files && input.files[0]) {
+                        var reader = new FileReader();
+
+                        reader.onload = function (e) {
+                            disableImageOverlay()
+                            var image = e.target.result
+                            var imageField = document.getElementById('id_profile_image_display')
+                            imageField.src = image
+                            cropper = new Cropper(imageField, {
+                                aspectRatio: 1/1,
+                                crop(event) {
+                                    // console.log("CROP START")
+                                    // console.log("x: " + event.detail.x);
+                                    // console.log("y: " + event.detail.y);
+                                    // console.log("width: " + event.detail.width);
+                                    // console.log("height: " + event.detail.height);
+                                    setImageCropProperties(
+                                        image,
+                                        event.detail.x,
+                                        event.detail.y,
+                                        event.detail.width,
+                                        event.detail.height
+                                    )
+                                },
+                            });
+                        };
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                };
+
+                function setImageCropProperties(image, x, y, width, height){
+                    imageFile = image
+                    cropX = x
+                    cropY = y
+                    cropWidth = width
+                    cropHeight = height
+                }
+
+            </script>
+
+
+
+            {% endblock content %}
+    
+    create a form
+        class AccountUpdateForm(forms.ModelForm):
+        class Meta:
+            model = Account
+            fields = ('username', 'email', 'profile_image', 'hide_email')
+
+        def clean_email(self):
+            email = self.cleaned_data['email'].lower()
+            try:
+                account = Account.objects.get(email=email)
+            except Exception as e:
+                return email
+            raise forms.ValidationError(f"email {email} is in use")
+            
+
+        def clean_username(self):
+            username = self.cleaned_data['username']
+            try:
+                account = Account.objects.get(username=username)
+            except Exception as e:
+                return username
+            raise forms.ValidationError(f"username {username} is in use")
+
+        def save(self, commit=True):
+            account = super(AccountUpdateForm ,self).save(commit=False)
+            account.username = self.cleaned_data('username')
+            account.email = self.cleaned_data('email')
+            account.hide_email = self.cleaned_data('hide_email')
+            account.profile_image = self.cleaned_data('profile_image')
+            if commit:
+                account.save()
+            return account
+
+    create a view
+            def AccountEditView(request, *args, **kwargs):
+        context = {}
+        if not request.user.is_authenticated:
+            return redirect("login")
+        user_id = kwargs.get("user_id")
+        try:
+            account = Account.objects.get(pk=user_id)
+        except Account.DoesNotExist:
+            return HttpResponse("Something went wrong")
+        if account.pk != request.user.pk:
+            return HttpResponse("You cannot edit another person's Account you fool")
+
+        if request.POST:
+            form = AccountUpdateForm(request.POST, request.FILES, instance=request.user)
+            if form.is_valid():
+                form.save()
+                return redirect("accview", user_id=account.pk)
+            else:
+                form = AccountUpdateForm(request.POST, instance=request.user,
+                #   these are the default values
+                initial = {
+                    "id": account.pk,
+                    "email": account.email,
+                    "username": account.username,
+                    "profile_image": account.profile_image,
+                    "hide_email": account.hide_email,
+                }
+                )
+                context['form'] = form
+        else:
+            form = AccountUpdateForm(
+            #   these are the default values
+            initial = {
+                    "id": account.pk,
+                    "email": account.email,
+                    "username": account.username,
+                    "profile_image": account.profile_image,
+                    "hide_email": account.hide_email,
+                }
+                )
+            context['form'] = form
+        context['DATA_UPLOAD_MAX_MEMORY_SIZE'] = settings.DATA_UPLOAD_MAX_MEMORY_SIZE
+        return render(request, "account/edit.html", context)
+
+CREATING THE FRIEND SYSTEM
+
+    create a friend app
+    create a friend list model
+    class FriendList(models.Model):
+
+        class FriendList(models.Model):
+
+        #   One friendlist per one user
+            user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="user")
+            friends = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name="friends")
+
+            def __str__(self):
+                return self.user.username
+
+            def add_friend(self, account):
+                #   Add a new friend
+                #   Chaecks if they ar friends
+                if not account in self.friends.all():
+                    self.friends.add(account)
+                    self.save()
+
+            def remove_friend(self, account):
+                #   Remove a friend
+                #   Checks if they are friends
+
+                if account in self.friends.all():
+                    self.friends.remove(account)
+            
+        #   Removes a person from your friend list 
+        #   the remover is the person removing
+
+            def unfriend(self, removee):
+
+                remover_friend_list = self
+
+                remover_friend_list.remove_friend(removee)
+
+        #   remove the friend from the removee's friend list
+
+                friends_list = FriendList.objects.get(user=removee)
+                friends_list.remove_friend(self.user)
+
+            def is_mutual_friend(self, friend):
+
+                if friend in self.friends.all():
+                    return  True
+                return False
+
+            
+        class FriendRequest(models.Model):
+
+            #   A friend request consists of two parts
+            # the sender and the receiver
+
+            sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="sender")
+            receiver = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="receiver")
+            is_active = models.BooleanField(blank=True, null=False, default=True)
+            timestamp = models.DateTimeField(auto_now_add=True)
+
+            def __str__(self):
+                return self.sender.username
+
+            def accept(self):
+                # Accepting a friend request and updating the sender and receiver's friend lists
+
+                receiver_friend_list = FriendList.objects.get(user=self.receiver)
+                if receiver_friend_list:
+                    receiver_friend_list.add_friend(self.sender)
+                    sender_friend_list = FriendList.objects.get(user=self.sender)
+                    if sender_friend_list:
+                        sender_friend_list.add_friend(self.receiver)
+                        self.is_active = False
+                        self.save()
+
+            def decline(self):
+                #   Declines a friend request
+                self.is_active = False
+                self.save()
+
+            def cancel(self):
+                #   Cancelling a friend request is avtive to false
+                self.is_active = False
+                self.save()
+
+USER SCREEN WITH FRIEND SYSTEM
+    STATES
+        is self
+            1: your profile is presented
+            0: move on
+        is friend
+            1: your friend's profile is presented
+            0: not your friend
+
+                THREE POSSIBLE VIEWS
+                    1   Friend request sent is presented
+                    2   They sent you a friend request is presented
+                    3   No request was sent is presented
+
+    create a friend_request_status.py file and create an enum
+        from enum import Enum
+
+            class FriendRequestStatus(Enum):
+                NO_REQUEST_SENT = -1
+                THEM_SENT_TO_YOU = 0
+                YOU_SENT_TO_THEM = 1
+    
+    create a utils.py file in the friends app
+        from friend.models import FriendRequest
+
+        def get_friend_request_or_false(sender, receiver):
+            try:
+                return FriendRequest.object.get(sender=sender, receiver=receiver, is_active=True)
+            except FriendRequest.DoesNotExist:
+                raise False
+
+    add the fuctionality in the account view
+        else:
+                        is_friend = False
+
+                        #   case 1 they sent you a request
+                        #   we need to get the friend request 
+                        #   you need to be able to accept or decline
+                        if get_friend_request_or_false(sender=account, receiver=user) != False:
+                            request_sent = FriendRequestStatus.THEM_SENT_TO_YOU.value
+                            context['pending_friend_request_id'] = get_friend_request_or_false(sender=account, receiver=user).id
+                        
+                        #   case 2 you sent to them
+                        #   we need to get the friend request 
+                        #   you need to be able to decline
+                        elif get_friend_request_or_false(sender=account, receiver=user) != False:
+                            request_sent = FriendRequestStatus.YOU_SENT_TO_THEM.value
+                            
+                        #   case 3 no request
+                        #   we DO NOT need to get the friend request 
+                        #   you need to be able to send them a request 
+                        else:
+                            request_sent = FriendRequestStatus.NO_REQUEST_SENT.value
+                elif not user.is_authenticated:
+                    is_self = False 
+
+                #   If you are looking at your own profile
+                else:
+                    try:
+                        friend_requests = FriendList.objects.filter(receiver=user, is_active=True)
+                    except:
+                        pass
+
+                context['is_self'] = is_self
+                context['is_friend'] = is_friend
+                context['BASE_URL'] = settings.BASE_DIR
+                context['request_sent'] = request_sent
+                context['friend_requests'] = friend_requests
+
+    edit the friends count in the account template
+
+SENDING A FRIEND REQUEST
+
+    create the view/ajax request in the friend's views.py file
+        from django.shortcuts import render
+        from django.http import HttpResponse
+        import json
+        from account.models import Account
+        from friend.models import FriendRequest
+        # Create your views here.
+
+        #   Ajax request for sending a friend request
+
+        def SendFriendRequestView(request, *args, **kwargs):
+
+            user = request.user
+            payload = {}
+            if request.method == "POST" and user.is_authenticated():
+                user_id = request.POST.get("receiver_user_id")
+                if user_id:
+                    receiver = Account.objects.get(pk=user_id)
+                    try:
+                        #   Get any friend request
+                        friend_requests = FriendRequest.objects.filter(sender=user, receiver=receiver)
+                        #   Find any that are active
+                        try:
+                            for request in friend_requests:
+                                if request.is_active:
+                                    raise Exception("You already sent them a friend request")
+                        #   If none are active, create anew one
+                            friend_request = FriendRequest(sender=user, receiver=receiver)
+                            friend_request.save()
+                            payload['response'] = "Friend request sent."
+                        except Exception as e:
+                            payload['response'] = str(e)
+                    except FriendRequest.DoesNotExist:
+                        #   There are no friend request create one
+                        friend_request = FriendRequest(sender=user, receiver=receiver)
+                        friend_request.save()
+                        payload['response'] = "Friend request sent."
+
+                    if payload['response'] = None:
+                        payload['response'] = "Something went wrong"
+                else:
+                    payload['response'] = "Unable to send a friend request"
+            else:
+                payload['response'] = "You must be authenticated to send a friend request"
+            return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    create a urls.py file
+        path('friend_request/', SendFriendRequestView, name="friendrequest")
+
+    create a send_request.html file with ajax code in it
+        <script type="text/javascript">
+            
+            function sendFriendRequest(id, uiUpdateFunction){
+                payload = {
+                    "csrfmiddlewaretoken": "{{ csrf_token }}",
+                    "receiver_user_id": id,
+                }
+                $.ajax({
+                    type: 'POST',
+                    dataType: "json",
+                    url: "{% url 'friendrequest' %}",
+                    timeout: 5000,
+                    data: payload,
+                    success: function(data) {
+                        console.log("SUCCESS", data)
+                        if(data['response'] == "Friend request sent."){
+                            // ui is updated
+                        }
+                        else if(data['response'] != null){
+                            alert(data['response'])
+                        }
+                    },
+                    error: function(data) {
+                        console.error("ERROR...", data)
+                        alert("Something went wrong.")
+                    },
+                    complete: function(data){
+                        uiUpdateFunction()
+                    }
+                });
+            }
+            
+
+        </script>
+    
+    add the following javascript code in the acc view file
+        <script type="text/javascript">
+
+            // called from base_js.html
+            //preloadImage("{{profile_image|safe}}", 'id_profile_image')
+
+            function onFriendRequestSent(){
+                location.reload();
+            }
+
+            function onFriendRequestCancelled(){
+                location.reload();
+            }
+
+            function onFriendRemoved(){
+                location.reload();
+            }
+
+            function onFriendRequestAccepted(){
+                location.reload();
+            }
+
+            function onFriendRequestDeclined(){
+                location.reload();
+            }
+
+
+            var sendFriendRequestBtn = document.getElementById("id_send_friend_request_btn")
+            if (sendFriendRequestBtn != null){
+                sendFriendRequestBtn.addEventListener("click", function(){
+                    sendFriendRequest("{{id}}", onFriendRequestSent)
+                })
+            }
+
+            var cancelFriendRequestBtn = document.getElementById("id_cancel_friend_request_btn")
+            if(cancelFriendRequestBtn != null){
+                cancelFriendRequestBtn.addEventListener("click", function(){
+                    cancelFriendRequest("{{id}}", onFriendRequestCancelled)
+                })
+            }
+
+            var removeFriendBtn = document.getElementById("id_unfriend_btn")
+            if (removeFriendBtn != null){
+                removeFriendBtn.addEventListener("click", function(){
+                    removeFriend("{{id}}", onFriendRemoved)
+                })
+            }
+
+            function triggerAcceptFriendRequest(friend_request_id){
+                acceptFriendRequest(friend_request_id, onFriendRequestAccepted)
+            }
+
+            function triggerDeclineFriendRequest(friend_request_id){
+                declineFriendRequest(friend_request_id, onFriendRequestDeclined)
+            }
+            
+        </script>
+
+QUERYING FRIEND REQUESTS
+
+    this is how your get the user id from the url
+    user_id = kwargs.get("user_id")
+
+    create a FriednRequestView in friends app
+        def FriendRequestsView(request, *args, **kwargs):
+
+        context = {}
+        user = request.user
+        if user.is_authenticated()
+            user_id = kwargs.get("user_id")
+            account = Account.objects.get(pk=user_id)
+            if account == user:
+                friend_requests = FriendRequest.objects.filter(receiver=account, is_active=True)
+                context['friend_requests'] = friend_requests
+            else:
+                return HttpResponse("You cannot view another person's friend requests")
+        else:
+            redirect("loginview")
+        return render(request ,"friend/friend-requests.html", context)
+
+    create a template that will loop throught the friend requests
+        {% extends 'base.html' %}
+        {% load static %}
+
+        {% block content %}
+
+
+        <style type="text/css">
+            .profile-image{
+                max-height: 100px;
+                max-width: 100px;
+            }
+            .profile-image{
+                border-radius: 12px;
+            }
+            .card{
+                border-radius: 12px;
+            }
+            .dropdown-toggle::after { 
+                content: none; 
+            }
+            .profile-link{
+                color: #000;
+            }
+            .material-icons{
+                font-size: 30px;
+            }
+            .material-icons:hover{
+                cursor: pointer;
+            }
+            .confirm-friend-request{
+                color: green;
+            }
+            .confirm-friend-request:hover {
+                opacity: 0.3;
+            }
+            .decline-friend-request:hover {
+                opacity: 0.3;
+            }
+            .decline-friend-request{
+                color: red;
+            }
+        </style>
+
+        <div class="container">
+            <div class="card p-2">
+
+                {% if friend_requests %}
+                <div class="d-flex flex-row flex-wrap">
+                {% for request in friend_requests %}
+                <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center">
+                    <a class="profile-link" href="{% url 'accview' user_id=request.sender.id %}">
+                        <div class="card-image m-2">
+                            <p>PROFILE IMAGE</p>
+                        </div>
+                    </a>
+                    <a class="profile-link" href="{% url 'accview' user_id=request.sender.id %}">
+                        <div class="card-center px-2">
+                            <h4 class="card-title">{{request.sender.username}}</h4>
+                        </div>
+                    </a>
+                    <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-2">
+                        <span id="id_cancel_{{request.sender.id}}" class="decline-friend-request material-icons p-1" onclick='triggerDeclineFriendRequest("{{request.id}}")'>Cancel</span>
+                        <span id="id_confirm_{{request.sender.id}}" class="confirm-friend-request material-icons p-1" onclick='triggerAcceptFriendRequest("{{request.id}}")'>Accept</span>
+                    </div>
+                </div>
+                {% if forloop.counter|divisibleby:2 %}
+                </div><div class="d-flex flex-row flex-wrap">
+                {% endif %}
+                
+                {% endfor %}
+                
+                {% else %} <!-- If no friends -->
+                <div class="d-flex flex-row flex-grow-1 justify-content-center align-items-center p-4">
+                    <p>No results</p>
+                </div>
+                {% endif %}
+                </div>
+            </div>
+            
+        </div>
+
+        <script type="text/javascript">
+
+            function onFriendRequestAccepted(){
+                location.reload();
+            }
+
+            function onFriendRequestDeclined(){
+                location.reload();
+            }
+
+            function triggerAcceptFriendRequest(friend_request_id){
+                acceptFriendRequest(friend_request_id, onFriendRequestAccepted)
+            }
+
+            function triggerDeclineFriendRequest(friend_request_id){
+                declineFriendRequest(friend_request_id, onFriendRequestDeclined)
+            }
+        </script>
+
+        {#% include 'friend/snippets/accept_friend_request.html' %#}
+        {#% include 'friend/snippets/decline_friend_request.html' %#}
+
+        {% endblock content %}
+                    
+ACCEPTING THE FRIEND REQUEST
+    create the view
+        user = request.user
+        #	Ajax code
+        payload = {}
+        if request.method == "GET" and user.is_authenticated:
+            #	Get the friend request id from the url
+            friend_request_id = kwargs.get("friend_request.id")
+            if friend_request_id == None:
+                #	Get the friend request from the database
+                friend_request = FriendRequest.objects.get(pk=friend_request_id)
+                #	Confirm that it is the right one
+                if friend_request.receiver == user:
+                    if friend_request:
+                        #	Found it and we are accepting it
+                        #	We built the accept function in the model
+                        friend_request.accept()
+                        payload['request'] = "Friend request accepted"
+                    else:
+                        payload['response'] = "Something went wrong"
+                else:
+                    payload['response'] = "That is not your request to accept"
+            else:
+                payload['response'] = "Unable to accept that reqeust"
+        else:
+            payload['response'] = "You must be authenticated to accept a friend request"
+        return HttpResponse(json.dumps(payload), content_type="application/json")	user = request.user
+        #	Ajax code
+        payload = {}
+        if request.method == "GET" and user.is_authenticated:
+            #	Get the friend request id from the url
+            friend_request_id = kwargs.get("friend_request.id")
+            if friend_request_id == None:
+                #	Get the friend request from the database
+                friend_request = FriendRequest.objects.get(pk=friend_request_id)
+                #	Confirm that it is the right one
+                if friend_request.receiver == user:
+                    if friend_request:
+                        #	Found it and we are accepting it
+                        #	We built the accept function in the model
+                        friend_request.accept()
+                        payload['request'] = "Friend request accepted"
+                    else:
+                        payload['response'] = "Something went wrong"
+                else:
+                    payload['response'] = "That is not your request to accept"
+            else:
+                payload['response'] = "Unable to accept that reqeust"
+        else:
+            payload['response'] = "You must be authenticated to accept a friend request"
+        return HttpResponse(json.dumps(payload), content_type="application/json")
+    create the url
+        path('accept_friend_request/<friend_request_id>/', AccpetFriendRequestView, name="acceptview"),
+    create the ajax template
+        <script type="text/javascript">
+
+            function acceptFriendRequest(friend_request_id, uiUpdateFunction) {
+                var url = "{% url 'acceptview' friend_request_id=525613164613352031 %}".replace("525613164613352031", friend_request_id)
+                
+                $.ajax({
+                    type: "GET",
+                    dataType: "json",
+                    url: url,
+                    timeout: 5000,
+                    success: function (data) {
+                        //                  This string should be the same one that your payload in the view is supposed to say
+                        if (data.response == "Friend request accepted") {
+                            console.log("Success")
+                        }
+                        else if (data.response != null) {
+                            alert(data.response)
+                        }
+                    },
+                    error: function (data) {
+                        if (data.response == "Friend request accepted") {
+                            console.log("Success")
+                        }
+                        else if (data.response != null) {
+                            alert("Something went wrong" + data)
+                        }
+                    },
+                    complete: function (data) {
+                        uiUpdateFunction()
+                    },            
+                })
+            }
+
+        </script>
+    include them in the account template and the friend requests template
+        {% include 'friend/snippets/accept.html' %}
+    add the following javascript functions
+        <script type="text/javascript">
+
+        function onFriendRequestAccepted(){
+            location.reload();
+        }
+
+        function onFriendRequestDeclined(){
+            location.reload();
+        }
+
+        function triggerAcceptFriendRequest(friend_request_id){
+            acceptFriendRequest(friend_request_id, onFriendRequestAccepted)
+        }
+
+        function triggerDeclineFriendRequest(friend_request_id){
+            declineFriendRequest(friend_request_id, onFriendRequestDeclined)
+        }
+        </script>
+
+UNFRIENDING A PERSON
+    create the ajax view like the past three ones
+        context = {}
+        user = request.user
+        payload = {}
+        if request == "POST" and user.is_authenticated:
+            user_id = request.POST.get("receiver_user_id")
+            if user_id:
+                try:
+                    removee = Account.objects.get(pk=user_id)
+                    #	Our friend list
+                    friend_list = FriendList.objects.get(user=user)
+                    #	The function was built in the models.py file
+                    friend_list.unfriend(removee)
+                    payload['response'] = "Successfully removed that friend"
+                except Exception as e:
+                    payload['response'] = f"Something went wrong {str(e)}"
+            else:
+                payload['response'] = "An error occured, please try again"
+
+        else:
+            payload['response'] = "You must be authenticated"
+        return HttpResponse(json.dumps(payload), content_type="application/json")
+    
+    create the url  WITH no aguments or IDs
+        path('unfriend/', UnfriendView, name="unfriendview")
+    create the template
+        <script type="text/javascript">
+            function removeFriend(id, uiUpdateFunction) {
+                payload = {
+                    // This is how you include the csrf token in ajax
+                    // You have to do this everytime you make a post request
+                    "csrfmiddlewaretoken": "{{ csrf_token }}"
+                    "receiver_user_id": id,
+                }
+                $.ajax ({
+                    type: "POST", 
+                    dataType: "json",
+                    timeout: 5000,
+                    url: "{% url 'unfriendview' %}",
+                    data: payload,
+                    success: function (data) {
+                        if (data.response == "Successfully removed that friend") {
+                            console.log("Success")
+                        }
+                        else if (data.response != null) {
+                            alerts(data.response)
+                        }
+                    },
+                    error: function (data) {
+                        alert("Something went wrong" + data.response )
+                    },
+                    complete: function (data) {
+                        uiUpdateFunction()
+                    },
+                })
+            }
+        </script>
+    
+    include it in the correct if statement in the accview
+    add the following function in the acc view
+        function onFriendRemoved(){
+            location.reload();
+        }
+
+DECLINING A FRIEND REQUEST
+    same as accept
+
+CANCELLING FRIEND REQUEST
+    create the view
+        def CancelFriendRequestView(request, *args, **kwargs):
+            user = request.user
+            #	Ajax code
+            payload = {}
+            if request.method == "POST" and user.is_authenticated:
+                #	Get my user id
+                user_id = request.POST.get("receiver_user_id")
+                if user_id:
+                    #	Get the receiver of the friend request
+                    receiver = Account.objects.get(pk=user_id)
+                    try:
+                        #	Get all friend requests that are active between me and the receiver [ 1 ]
+                        friend_requests = FriendRequest.objects.filter(sender=user, receiver=receiver, is_active=True)
+
+                    except Exception as e:
+                        payload['response'] = "Nothing to cancel"
+
+                    #	If there are more than one friend requests cancell them all
+                    if len(friend_requests) > 1:
+                        for request in friend_requests:
+                            request.cancel()
+                        payload['response'] = "Friend request cancelled"
+                    #	Cancell the single friend request
+                    else:
+                        friend_requests.first().cancel()
+                        payload['response'] = "Friend request cancelled"
+                else:
+                    payload['response'] = "Unable to cancel that reqeust"
+            else:
+                payload['response'] = "You must be authenticated to cancel a friend request"
+                
+            return HttpResponse(json.dumps(payload), content_type="application/json")
+
+    create the ajax template
+        <script type="text/javascript">
+
+            function cancelFriendRequest(id, uiUpdateFunction) {
+                
+                payload = {
+                    "csrfmiddlewaretoken": "{{ csrf_token }}",
+                    "receiver_user_id": id, 
+                }
+            
+                $.ajax({
+                    type: "POST",
+                    data: payload,
+                    url: "{% url 'cancelview' %}",
+                    timeout: 5000,  
+                    success: function(data) {
+                        if (data.response == "Friend request cancelled") {
+                            console.log("Success")
+                        }
+                        else if (data.response != null) {
+                            console.log("Something went wrong" + data.response)
+                        }
+                    },
+                    error: function(data) {
+                        console.log("Something went wrong")
+                    },
+                    complete: function(data) {
+                        uiUpdateFunction()
+                    },
+                })
+            }
+
+        </script>
+    create the url which takes no arhuments because its a post request
+        path('cancel_riend_request/', CancelFriendRequestView, name="cancelview")
+    include it in the right templates
+    add the following javascript code
+        var cancelFriendRequestBtn = document.getElementById("id_cancel_friend_request_btn")
+        if(cancelFriendRequestBtn != null){
+            cancelFriendRequestBtn.addEventListener("click", function(){
+                cancelFriendRequest("{{id}}", onFriendRequestCancelled)
+            })
+        }
+
+QUERYING FRIEND LISTS
+
+    create the view
+        def FriendListView(request, *args, **kwargs):
+            context = {}
+            user = request.user
+            if user.is_authenticated:
+                user_id = kwargs.get("user_id")
+                if user_id:
+                    try:
+                        this_user = Account.objects.get(pk=user_id)
+                        context['this_user'] = this_user
+                    except Account.DoesNotExist:
+                        return HttpResponse("That user does not exist.")
+                    try:
+                        friend_list = FriendList.objects.get(user=this_user)
+                    except FriendList.DoesNotExist:
+                        return HttpResponse(f"Could not find a friends list for {this_user.username}")
+                    
+                    # Must be friends to view a friends list
+                    if user != this_user:
+                        if not user in friend_list.friends.all():
+                            return HttpResponse("You must be friends to view their friends list.")
+                    friends = [] # [(friend1, True), (friend2, False), ...]
+                    # get the authenticated users friend list
+                    auth_user_friend_list = FriendList.objects.get(user=user)
+                    for friend in friend_list.friends.all():
+                        friends.append((friend, auth_user_friend_list.is_mutual_friend(friend)))
+                    context['friends'] = friends
+            else:		
+                return HttpResponse("You must be friends to view their friends list.")
+            return render(request, "friend/friend-list.html", context)	
+    create the url
+        path('friend_list_view/<user_id>/', FriendListView, name="friendlist"),
+    create the html templates
+        {% extends 'base.html' %}
+        {% load static %}
+
+        {% block content %}
+
+        <style type="text/css">
+            .profile-image{
+                max-height: 100px;
+                max-width: 100px;
+            }
+            .profile-image{
+                border-radius: 12px;
+            }
+            .card{
+                border-radius: 12px;
+            }
+            .friends-text{
+                color: #000;
+                font-weight: 500;
+            }
+            .friends-text-container{
+                border: 1px solid #cccccc;
+                border-radius: 12px;
+            }
+            .friends-btn:hover {
+                background-color: #bfbfbf;
+                border-color: #bfbfbf;
+            }
+            .dropdown-toggle::after { 
+                content: none; 
+            }
+            .profile-link{
+                color: #000;
+            }
+            .checkmark-icon{
+                color: green;
+            }
+            .cancel-icon{
+                color: red;
+            }
+            
+        </style>
+
+        <div class="container">
+            <div class="card p-2">
+
+                {% if friends %}
+                <div class="d-flex flex-row flex-wrap">
+                {% for friend in friends %}
+                <div class="card flex-row flex-grow-1 p-2 mx-2 my-2 align-items-center">
+                    <a class="profile-link" href="{% url 'accview' user_id=friend.0.pk %}">
+                        <div class="card-image m-2">
+                            <img class="img-fluid profile-image" src="{{friend.0.profile_image.url}}" alt="">
+                        </div>
+                    </a>
+                    
+                    <div class="card-center px-2">
+                        <a class="profile-link" href="{% url 'accview' user_id=friend.0.pk %}">
+                            <h4 class="card-title">{{friend.0.username|truncatechars:50}}</h4>
+                        </a>
+                        {% if friend.1 %}
+                        <a href="#" onclick="createOrReturnPrivateChat('{{friend.0.id}}')">Send a Message</a>
+                        {% endif %}
+                        
+                    </div>
+                    
+                    <div class="d-flex flex-row card-right flex-grow-1 justify-content-end mx-2">
+                        {% if friend.1 %}
+                            <div class="d-flex flex-row friends-text-container p-3">
+                                <p class="friends-text m-auto">
+                                    Friends 
+                                </p>
+                            </div>
+                        {% else %}
+                            {% if friend.0 !=  request.user %}
+                                <div class="d-flex flex-row friends-text-container p-3">
+                                    <p class="friends-text m-auto">
+                                        Not Friends 
+                                    </p>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                        {% if friend.0 == request.user %}
+                            <div class="d-flex flex-row friends-text-container p-3">
+                                <p class="friends-text m-auto">
+                                    This is you 
+                                </p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if forloop.counter|divisibleby:2 %}
+                </div><div class="d-flex flex-row flex-wrap">
+                {% endif %}
+                
+                {% endfor %}
+                
+                {% else %} <!-- If no friends -->
+                <div class="d-flex flex-row flex-grow-1 justify-content-center align-items-center p-4">
+                    <p>No friends :(</p>
+                </div>
+                {% endif %}
+
+
+
+        {#%  include 'chat/snippets/create_or_return_private_chat.html' %#}
+
+        {% endblock content %}
+
+
+
+
+
+CHAT SERIES
+
+PUBLIC CHAT 
+    The models we probably need
+        table for the chatroom
+        table for publich chat message
+            room with models.ForeignKey
+            user
+            message
+    
+    Create a new feature called publichat
+    Add in your settings.py file
+    Create a new table for each chat room with two fields
+        title
+        user (manytomany field)
+
+    Add these functions to connect and disconnect users to a chat room
+        
+        def connect_user(self, user):
+
+            """
+            return True if user is added to the user list
+            """
+            is_user_added = False
+            if not user in self.users.all():
+                self.users.add(user)
+                self.save()
+                is_user_added = True
+
+            elif user in self.user.All():
+                is_user_added = True
+            return is_user_added
+
+        def disconnect_user(self, user):
+            """
+            return True if the user is removed from the user list
+            """
+            is_user_removed = False
+            if user in self.users.all():
+                self.users.remove(user)
+                self.save()
+                is_user_removed = True
+            return is_user_removed
+
+    Create a new table for the messages with 4 fields
+        user FK
+        room FK
+        timestamp
+        content
+
+    Create a new manager for the model above to handle some common queries
+        class PublicChatRoomMessageManager(models.Manager):
+
+            def by_room(self, room):
+                qs = PublicChatRoomMessage.obejcts.filter(room=room).order_by("-timestamp")
+                return qs
+
+    Add the tables into the admin panel and caching functionality
+
+        from django.core.paginator import Paginator
+        from django.core.cache import cache
+        from django.db import models
+        from publichat.models import (
+            PublicChatRoom,
+            PublicChatRoomMessage
+        )
+        # Register your models here.
+
+
+        class PublicChatRoomAdmin(admin.ModelAdmin):
+            list_display = ['id','title', ]
+            search_fields = ['id', 'title', ]
+            readonly_fields = ['id',]
+
+            class Meta:
+                model = PublicChatRoom
+            
+        admin.site.register(PublicChatRoom, PublicChatRoomAdmin)
+
+        class CachingPaginator(Paginator):
+            def _get_count(self):
+
+                if not hasattr(self, "_count"):
+                    self._count = None
+
+                if self._count is None:
+                    try:
+                        key = "adm:{0}:count".format(hash(self.object_list.query.__str__()))
+                        self._count = cache.get(key, -1)
+                        if self._count == -1:
+                            self._count = super().count
+                            cache.set(key, self._count, 3600)
+
+                    except:
+                        self._count = len(self.object_list)
+                return self._count
+
+            count = property(_get_count)
+
+        class PublicChatRoomMessageAdmin(admin.ModelAdmin):
+            list_filter = ['room',  'user', "timestamp"]
+            list_display = ['room',  'user', 'content',"timestamp"]
+            search_fields = ['room__title', 'user__username','content']
+            readonly_fields = ['id', "user", "room", "timestamp"]
+
+            show_full_result_count = False
+            paginator = CachingPaginator
+
+            class Meta:
+                model = PublicChatRoomMessage
+
+
+        admin.site.register(PublicChatRoomMessage, PublicChatRoomMessageAdmin)
+
+    Apply the changes that you made
+
+
+INSTALLING CHANNESL AND redis
+
+    Install django channels 
+    Add 'channels' in your installed apps in settings.py
+
+    WSGI (Web server gateway interface)
+        THe older version
+
+    ASGI (Asychronus server gateway interface)
+        Succesor of the wsgi
+        We have to server the channels as its own entity/application to run the web sockets
+
+    Create a routing.py file in the root 
+        THis is were we build the asgi app
+        Define the application type (websocket or http)
+            from channels.auth import AuthMiddleWareStack
+            from channels.routing import ProtocolTypeRouter, URLRouter
+            from channels.security.websocket import AllowedHostOriginValidator
+            from django.urls import path
+
+            application = ProtocolTypeRouter({
+                'websocket': AllowedHostOriginValidator(
+    Some security
+                    AuthMiddleWareStack(
+                        # URLRouter([ ... ]) #Empty because we have no consumer
+                    )
+                )
+            })
+
+    Configure redis
+    Redis distributes the message to all people subscribed to the socket
+        
+    
+
+
+
+    
+
+
+
+

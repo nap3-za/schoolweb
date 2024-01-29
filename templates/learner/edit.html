@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-7">
+			<div class="card my-4 border border-dark ">
+				<div class="card-body">
+					<h2 class="card-title card-h">Update Learner account</h2>
+					<form method="POST">{% csrf_token %}
+							<div class="form-group">
+								<label for="id_grade">Grade</label>
+								<select name="grade" required="" id="id_grade" class="form-control">
+									<option selected value={{learner_account.grade}}>{{learner_account.grade}}</option>
+									<option value=8>8</option>
+									<option value=9>9</option>
+									<option value=10>10</option>
+									<option value=11>11</option>
+									<option value=12>12</option>
+								</select>
+							</div>
+
+								<label for="id_stream">Stream</label>
+								<select name="stream" required="" id="id_stream" class="form-control">
+									<option selected value="{{learner_account.stream}}">{{learner_account.stream}}</option>
+									<option value="Technical stream 1">Technical stream 1</option>
+									<option value="Technical stream 2">Technical stream 2</option>
+									<option value="Science">Science</option>
+									<option value="Information technology">Information technolofy (I.T)</option>
+									<option value="None">None</option>
+									<option value="Commerce">Commerce</option>
+								</select>
+							</div>
+
+
+
+							<div class="form-group">
+								<label for="id_sport" class="label">Sport</label>
+								<select name="sport" id="id_sport" class="form-control">
+								<option selected value={{ learner_account.sport}}>{{learner_account.sport}}</option>
+									<option calue="None">None</option>
+									<option value="Chess">Chess</option>
+									<option value="Tennis">Tennis</option>
+									<option value="Soccer">Soccer</option>
+									<option value="Netball">Netball</option>
+
+								</select>
+							</div>
+
+							<div class="form-group">
+								<label for="id_club" class="label">Club</label>
+								<select name="club" id="id_club" class="form-control">
+								<option selected value={{ learner_account.club}}>{{learner_account.club}}</option>
+									<option calue="None">None</option>
+									<option value="Robotics">Robotics</option>
+									<option value="Science">Science</option>
+									<option value="English society">English society</option>
+								</select>
+							</div>
+
+						{% for field in form %}
+							<p>
+							{% for error in field.errors %}
+								<p style="color: red">{{ error }}</p>
+							{% endfor %}
+							</p>
+						{% endfor %}
+						{% if form.non_field_errors %}
+							<div style="color: red">
+								<p>{{ form.non_field_errors }}</p>
+							</div>
+						{% endif %}
+						<br>
+						<button class="btn btn-primary m-2">Save</button>
+					</form> 
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+
+
+
+
+
+
+

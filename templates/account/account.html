@@ -1,0 +1,251 @@
+{% extends 'base.html' %}
+{% load static %}
+
+<style type="text/css">
+	.image-container{
+		max-width: 200;
+		height: 200;
+        align: center;
+        align-self: center;
+	}
+</style>
+
+{% block title %}
+Account
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-6">
+			<div class="card my-4 border border-dark">
+				<div class="card-body">
+					<h2 class="card-title card-h">Account details</h2>
+					<img src="{% static 'pp.png' %}" class="d-block rounded-circle img-fluid mx-auto profile-image image-container" alt="Profile image">
+
+					<small>Email:</small>
+					{% if is_self %}
+						<h5>{{base_account.email}}</h5>
+					{% else %}
+						{% if base_account.hide_email %}
+							<h5>**********</h5>
+						{% else %}
+							<h5>{{base_account.email}}</h5>
+						{% endif %}
+					{% endif %}
+					<small>Username</small>
+					<h5>{{base_account.username}}</h5>
+
+
+					{% if learner_account %}
+						<small>Grade</small>
+						<h5>{{learner_account.grade}}</h5>
+
+						{% if learner_account.stream != 'None' %}
+						<small>Stream</small>
+						<h5>{{learner_account.stream}}</h5>
+						{% endif %}
+
+						<small>Sport</small>
+						<h5>{{learner_account.sport}}</h5>
+
+						<small>Club</small>
+						<h5>{{learner_account.club}}</h5>
+
+
+					{% elif teacher_account %}
+
+						<small>Stream 1 </small>
+						<h5>{{teacher_account.stream1}}</h5>
+
+						<small>Stream 2 </small>
+						<h5>{{teacher_account.stream2}}</h5>
+
+						<small>Subject 1 </small>
+						<h5>{{teacher_account.sub1}}</h5>
+
+						<small>Subject 2</small>
+						<h5>{{teacher_account.sub2}}</h5>
+
+						<small>Subject 3</small>
+						<h5>{{teacher_account.sub3}}</h5>
+
+
+						<small>Sport</small>
+						<h5>{{teacher_account.sport}}</h5>
+					{% endif %}
+
+ 
+					<!-- If Auth user is viewing their own profile -->
+					{% if is_self %}
+
+                    <small>Hide email:</small>
+                    <p>{% if request.user.hide_email %}Yes{% elif not request.user.hide_email %}No{% endif %}</p>    
+
+					<a  class="mt-4 btn btn-primary" href="{% url 'update' %}">Update Account</a>
+					{% if base_account.is_learner %}
+					<a class="mt-4 btn btn-primary" href="{% url 'learner_account_update' %}">Update learner profile</a>
+					{% elif not base_account.is_learner %}
+					<a class="mt-4 btn btn-primary" href="{% url 'teacher_account_update' %}">Update teacher profile</a>
+					{% endif %}
+					<div class="d-flex flex-column mt-4">
+						<a class="m-auto" href="{% url 'password_change' %}">Change password</a>
+					</div>
+
+					<button class="btn btn-danger" type="button"><a class="text-light" href="{% url 'delete_account' %}">Delete account</a></button>
+					{% endif %}
+				</div>
+			</div>
+		</div>
+		<div class="col-md-4">
+			<div class="card my-4 border border-dark">
+
+		{% if request.user.is_authenticated %}
+		<div class="d-flex flex-column mb-4">
+
+			<!-- THEM to YOU -->
+			{% if request_sent == 0 %}
+			<div class="card m-2 p-4">
+				<div class="d-flex flex-row align-items-center">
+					<span class="friend-text align-items-center mr-2">Accept Friend Request</span>
+					<span id="id_cancel_{{base_account.id}}" class="decline-friend-request material-icons p-1" onclick='triggerDeclineFriendRequest("{{pending_friend_request_id}}")'>cancel</span>
+  					<span id="id_confirm_{{base_account.id}}" class="confirm-friend-request material-icons p-1" onclick='triggerAcceptFriendRequest("{{pending_friend_request_id}}")'>check</span>
+				</div>
+			</div>
+			{% endif %}
+
+			<div class="card m-2 px-4 pb-4">
+				<!-- Cancel Friend Request / Send Friend Request / Remove Friend -->
+				{% if is_friend == False and is_self == False %}
+						<!-- You sent them a request -->
+						{% if request_sent == 1 %}
+						<div class="d-flex flex-column align-items-center pt-4">
+							<button class="btn btn-danger" id="id_cancel_friend_request_btn">
+								Cancel Friend Request
+							</button>
+						</div>
+						{% endif %}
+						<!-- No requests have been sent -->
+						{% if request_sent == -1 %}
+						<div class="d-flex flex-column align-items-center pt-4">
+							<button class="btn btn-primary" id="id_send_friend_request_btn">
+								Send Friend Request
+							</button>
+						</div>
+						{% endif %}
+				{% endif %}
+					
+					
+				{% if is_friend %}
+					<div class="dropdown pt-4 m-auto">
+						<button class="btn btn-danger" class="id_unfriend_btn">
+							<a href="#" onclick="removeFriend('{{base_account.id}}', onFriendRemoved)" class="text-light">Unfriend</a>
+						</button>
+					</div>
+				{% endif %}
+				
+				<!-- Friend list link -->
+		  		<div class="d-flex flex-column pt-4">
+					<a href="{% url 'friend_list' subject_user_id=base_account.id %}">
+						<div class="d-flex flex-row align-items-center justify-content-center icon-container">
+							<span class="friend-text">Friends ({{friends|length}})</span>
+						</div>
+					</a>
+				</div>
+
+			</div>
+
+			{% if is_self %}
+			<div class="card m-2 px-4 pb-4">
+				<!-- Friend requests -->
+		  		<div class="d-flex flex-column pt-4">
+					<a href="{% url 'friend_requests' %}">
+						<div class="d-flex flex-row align-items-center justify-content-center icon-container">
+							<span class="friend-text">Friend Requests ({{friend_requests|length}})</span>
+						</div>
+					</a>
+				</div>
+			</div>
+			{% endif %}
+
+			{% if is_friend %}
+
+			{% endif %}
+
+		</div>
+		{% endif %}
+			</div>
+		</div>
+	</div>
+</div>
+
+<script type="text/javascript">
+
+	// called from base_js.html
+	//preloadImage("{{profile_image|safe}}", 'id_profile_image')
+
+	function onFriendRequestSent(){
+		location.reload();
+	}
+
+	function onFriendRequestCancelled(){
+		location.reload();
+	}
+
+	function onFriendRemoved(){
+		location.reload();
+	}
+
+	function onFriendRequestAccepted(){
+		location.reload();
+	}
+
+	function onFriendRequestDeclined(){
+		location.reload();
+	}
+
+
+	var sendFriendRequestBtn = document.getElementById("id_send_friend_request_btn")
+	if (sendFriendRequestBtn != null){
+		sendFriendRequestBtn.addEventListener("click", function(){
+			sendFriendRequest("{{base_account.id}}", onFriendRequestSent)
+		})
+	}
+
+	var cancelFriendRequestBtn = document.getElementById("id_cancel_friend_request_btn")
+	if(cancelFriendRequestBtn != null){
+		cancelFriendRequestBtn.addEventListener("click", function(){
+			cancelFriendRequest("{{base_account.id}}", onFriendRequestCancelled)
+		})
+	}
+
+	var removeFriendBtn = document.getElementById("id_unfriend_btn")
+	if (removeFriendBtn != null){
+		removeFriendBtn.addEventListener("click", function(){
+			removeFriend("{{base_account.id}}", onFriendRemoved)
+		})
+	}
+
+	function triggerAcceptFriendRequest(friend_request_id){
+		acceptFriendRequest(friend_request_id, onFriendRequestAccepted)
+	}
+
+	function triggerDeclineFriendRequest(friend_request_id){
+		declineFriendRequest(friend_request_id, onFriendRequestDeclined)
+	}
+	
+</script>
+
+{% include 'friend/snippets/send_friend_request.html' %}
+{% include 'friend/snippets/accept_friend_request.html' %}
+{% include 'friend/snippets/decline_friend_request.html' %}
+{% include 'friend/snippets/cancel_friend_request.html' %}
+{% include 'friend/snippets/remove_friend.html' %}
+
+
+
+{% endblock content %}
+
+
+

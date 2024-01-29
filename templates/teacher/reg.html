@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Teacher registration
+{% endblock title %}
+
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+        <div class="card my-4">
+          <div class="card-body">
+              <form class="form" method="POST">{% csrf_token %}
+                    <div class="form-group">
+                        <label for="id_stream">Stream choice 1</label>
+                        <select name="stream1" id="id_stream" class="form-control" required>
+                            <option value="None">None</option>
+                            <option value="Technical stream 2">Technichal stream 2</option>
+                            <option value="Technical stream 1">Technichal stream 1</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Science">Science</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_stream">Stream choice 2</label>
+                        <select name="stream2" id="id_stream" class="form-control" required>
+                            <option value="None">None</option>
+                            <option value="Technical stream 2">Technichal stream 2</option>
+                            <option value="Technical stream 1">Technichal stream 1</option>
+                            <option value="Commerce">Commerce</option>
+                            <option value="Science">Science</option>
+                        </select>
+                    </div>
+
+
+                    <div class="form-group">
+                        <label for="id_sport" class="label">Sport</label>
+                        <select name="sport" id="id_sport" class="form-control">
+                            <option value="None">None</option>
+                            <option value="Chess">Chess</option>
+                            <option value="Tennis">Tennis</option>
+                            <option value="Soccer">Soccer</option>
+                            <option value="Netball">Netball</option>
+
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_subject1" class="label">Subject 1</label>
+                        <select name="sub1" id="id_subject1" class="form-control">
+                            <option value="Information technology">None</option>
+                            <option value="Technical science">Technical science</option>
+                            <option value="Business studies">Business studies</option>
+                            <option value="Life orientation">Life orientation</option>
+                            <option value="Accounting">Accounting</option>
+                            <option value="Life science">Life science</option>
+                            <option value="Sepedi">Sepedi</option>
+                            <option value="Maths">Maths</option>
+                            <option value="English">English</option>
+                            <option value="None">None</option>
+                            <option value="Physical science">Physical science</option>
+                            <option value="Electronics">Electronics</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_subject2" class="label">Subject 2</label>
+                        <select name="sub2" id="id_subject2" class="form-control">
+                            <option value="None">None</option>
+                            <option value="Information technology">None</option>
+                            <option value="Technical science">Technical science</option>
+                            <option value="Business studies">Business studies</option>
+                            <option value="Life orientation">Life orientation</option>
+                            <option value="Accounting">Accounting</option>
+                            <option value="Life science">Life science</option>
+                            <option value="Sepedi">Sepedi</option>
+                            <option value="Maths">Maths</option>
+                            <option value="English"></option>
+                            <option value="">English</option>
+                            <option value="Physical science">Physical science</option>
+                            <option value="Electronics">Electronics</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="id_subject3" class="label">Subject 3</label>
+                        <select name="sub3" id="id_subject3" class="form-control">
+                            <option value="Information technology">None</option>
+                            <option value="Technical science">Technical science</option>
+                            <option value="Business studies">Business studies</option>
+                            <option value="Life orientation">Life orientation</option>
+                            <option value="Accounting">Accounting</option>
+                            <option value="Life science">Life science</option>
+                            <option value="Sepedi">Sepedi</option>
+                            <option value="Maths">Maths</option>
+                            <option value="English"></option>
+                            <option value="">English</option>
+                            <option value="Physical science">Physical science</option>
+                            <option value="Electronics">Electronics</option>
+                            <option value="None">None</option>
+                        </select>
+                    </div>
+
+                        <!-- START Error handling -->
+                        {% for field in form %}
+                            <p>
+                            {% for error in field.errors %}
+                            <p style="color: red">{{ error }}</p>
+                            {% endfor %}
+                            </p>
+                        {% endfor %}
+                        {% if form.non_field_errors %}
+                            <div style="color: red">
+                                <p>{{form.non_field_errors}}</p>
+                            </div>
+                        {% endif %}
+                        <!-- END Error handling -->
+                    <button class="btn btn-primary btn-block" type="submit">Submit</button>
+                </form>
+            </div>
+        </div>
+        </div>
+    </div>
+</div>
+
+{% endblock%}

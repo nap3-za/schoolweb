@@ -1,0 +1,145 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="container-fluid">
+	<div class="row justify-content-center">
+		<div class="col-md-7">
+			<div class="border-top border-bottom border-dark m-3 p-2 form-inline">
+				<h1 class="pt-2 card-h">POSTS&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</h1>
+				<button class="btn btn-default border border-success shadow" style="right: 10px;"><a href="{% url 'create_post' %}" class="text-success">Create</a></button>
+					
+				<div class="btn-group dropright">
+					<button class="btn btn-secondary dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Filters</button>
+					<div class="dropdown-menu">
+					<a class="text-dark" href="#">Grade</a>
+					</div>
+				</div>
+			</div>
+			{% if posts %}
+				{% for post in posts%}
+					<div class="card m-3 shadow border">
+						<div class="card-body">
+							<h2 class="card-h card-title"><a href="{% url 'post' post_id=post.id %}" class="text-dark">{{ post.title }}</a></h2>
+							<p class="card-text">{{ post.intro|truncatechars:50}}</p>
+							<a href="{% url 'post' post_id=post.id %}" class="#">Read More &rarr;</a>
+						</div>
+						<div class="card-footer text-muted">
+							<p>Posted on {{ post.timestamp }}
+								<button class="btn btn-default border border-primary shadow" type="button">
+									<a href="{% url 'update_post' post_id=post.id %}" class="text-primary">Update</a>
+								</button>
+								<button class="btn btn-default border border-danger shadow" type="button">
+									<a href="{% url 'delete_post' post_id=post.id %}" class="text-danger">Delete</a>
+								</button></p>
+						</div>	
+					</div>
+				{% endfor %}
+			{% else %}
+				<div class="card-body">
+					<center><p class="card-text">No posts :(</p></center>
+        		</div>
+			{% endif  %}
+		</div>
+		<div class="col-md-4">
+
+			<ul class="pagination justify-content-center mb-4">
+				<li class="page-item">
+					{% if posts.has_previous %}
+					<a class="page-link" href="?page={{ posts.previous_page_number }}">&larr; Newer</a>
+					{% endif %}
+				</li>
+				<li clas="page-item">
+					<a class="page-link" href="#">{{ posts.number }} of {{ posts.paginator.num_pages }}</a>
+				</li>
+				<li class="page-item">
+					{% if posts.has_next %}
+					<a class="page-link" href="?page={{ posts.next_page_number }}">Older &rarr;</a>
+					{% endif %}
+				</li>
+			</ul>
+
+        <!-- Search Widget -->
+        <div class="card my-4">
+          <h5 class="card-header">Search</h5>
+          <div class="card-body">
+            <div class="input-group">
+              <input type="text" class="form-control" placeholder="Search for posts...">
+              <span class="input-group-append">
+                <button class="btn btn-secondary" type="button">Go!</button>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Categories Widget -->
+    <div class="card my-4">
+        <h5 class="card-header">Categories</h5>
+        <div class="card-body">
+            <div class="row">
+				<div class="col-lg-12">
+          <button class="btn btn-default border border-dark btn-block m-1">
+          <a href="#" class="text-dark">General</a>
+          </button>
+				</div>
+            	<div class="col-lg-6">
+
+
+                <ul class="list-unstyled mb-0">
+                  <li>
+                   <button class="btn btn-default border border-dark btn-block m-1">
+				   	<a href="#" class="text-dark">Grade 10</a>
+				   </button>
+                  </li>
+                  <li>
+                   <button class="btn btn-default border border-dark btn-block m-1">
+				   	<a href="#" class="text-dark">Stream</a>
+				   </button>
+                  </li>
+                  <li>
+                   <button class="btn btn-default border border-dark btn-block m-1">
+				   	<a href="#" class="text-dark">Sport</a>
+				   </button>
+                  </li>
+                  </li>
+                   <button class="btn btn-default border border-dark btn-block m-1">
+				   	<a href="#" class="text-dark">Club</a>
+				   </button>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-lg-6">
+                <ul class="list-unstyled mb-0">
+                  <li>
+                   <button class="btn btn-default border border-success btn-block m-1">
+				   	<a href="#" class="text-success">Announcements</a>
+				   </button>
+                  </li>
+                   <button class="btn btn-default border border-danger btn-block m-1">
+				   	<a href="#" class="text-danger">Notice</a>
+				   </button>
+                  </li>
+				</li>
+                   <button class="btn btn-default border border-primary btn-block m-1">
+				   	<a href="#" class="text-primary">Updates</a>
+				   </button>
+                  </li>
+                  </li>
+                   <button class="btn btn-default border border-success btn-block m-1">
+				   	<a href="#" class="text-success">Important</a>
+				   </button>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+		</div>
+	</div>
+</div>
+
+{% endblock content %}
+
+
+

@@ -1,0 +1,139 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}
+Blog
+{% endblock %}
+
+
+{% block content %}
+
+<style type="text/css">
+    .pp-image {
+        width: 20px;
+        height: 20px;
+        }
+</style>
+
+
+  <!-- Page Content -->
+<div class="container-fluid">
+	<div class="row justify-content-center">
+        <div class="col-md-10">
+            <h1 class="card-h mt-4">{{ post.title }}</h1>
+            <p class="lead">
+                by
+                <a href="{% url 'account' subject_user_id=post.author.id %}">{% if request.user == post.author %}You{% else %}{{ post.author }}{% endif %}</a>
+            </p>
+            <div class="border border-info mb-2"></div>
+            <p>Posted on {{ post.timestamp.date }}</p>
+            <div class="border border-info"></div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <div class="col-md-6 mt-2">
+            <div class="card border border-secondary shadow">
+                <p class="lead card-title">{{ post.intro|escape|linebreaksbr }}</p>
+                <div class="card-body shadow">
+                    <p>{{ post.content|escape|linebreaksbr }}</p>
+                </div>
+                <div class="card-footer text-muted pb-0">
+                    {% if is_mine %}
+                        <p><button class="btn btn-default border border-primary shadow" type="button">
+                            <a href="{% url 'update_post' post_id=post.id %}" class="text-primary">Update</a>
+                        </button>
+                        <button class="btn btn-default border border-danger shadow" type="button">
+                            <a href="{% url 'delete_post' post_id=post.id %}" class="text-danger">Delete</a>
+                        </button>
+                            <span class="pl-3">views : {{ views|length }}</span>
+                        </p>
+                    {% else %}
+                    <p><button class="btn btn-default border border-dark text-dark align-right">views : {{ views|length }}</button></p>
+                    {% endif %}
+
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border border-secondary mt-2 shadow">
+                <div class="card-header">
+                    <h3 class="card-h">Comments</h3>
+                </div>
+                <div class="card-body">
+                <div class="input-group">
+                    <input type="text" class="form-control border border-info shadow" id="id_comment_input" placeholder="Add a comment...">
+                    <span class="input-group-append">
+                        <button class="btn btn-info border rounded-right shadow" type="button" onclick="triggerAddComment()">Go!</button>
+                    </span>
+                </div>
+                {% if comments %}
+
+                    {% for comment in comments %}
+                    <div class="card my-4 shadow">
+                        <a href="{% url 'account' subject_user_id=comment.0.author.id %}" class="text-dark font-weight-bold pt-2 pl-1"><img class="pp-image rounded-circle" src="{% static 'pp.png' %}" alt="profile image" /><small>{% if comment.1 %}You{% else %}{{ comment.0.author }}{% endif %}</small></a>
+                        <hr>
+                        <p class="card-text pl-2">{{ comment.0.content }}<br>
+                            <div class="card-footer pl-1 pb-0">
+                            <small>{{ comment.0.timestamp.date }}</small>
+                            {% if comment.1 %}
+                            <button class="btn btn-danger">
+                                <a href="{% url 'delete_comment' post_id=post.id comment_id=comment.0.id %}" class="text-light">
+                                Delete
+                                </a>
+                            </button>
+                            
+                            <form method="POST" action="{% url 'edit_comment' post_id=post.id comment_id=comment.0.id %}">{% csrf_token %}
+                                <input type="text" class="form-control border border-info shadow" name="content" id="id__edit_comment_input" value="{{ comment.0.content}}">
+                                <input type="hidden" id="id_comment_id" name="comment_id" value="{{ comment.0.id }}">
+                                <span class="input-group-append">
+                                    <button id="id_edit_comment_btn" class="btn btn-info border rounded-right shadow" type="submit">Go!</button>
+                                </span>
+                                {% for field in form %}
+                                    <p>
+                                    {% for error in field.errors %}
+                                        <p style="color: red">{{ error }}</p>
+                                    {% endfor %}
+                                    </p>
+                                {% endfor %}
+                                {% if form.non_field_errors %}
+                                    <div style="color: red">
+                                        <p>{{ form.non_field_errors }}</p>
+                                    </div>
+                                {% endif %}
+                            </form>
+                            {% endif %}
+                        </p>
+                            </div>
+                    </div>
+
+                    {% endfor %}
+
+                {% else %}
+                <div class="card m-2 border border-primary">
+                    <div class="card-body">
+                        <p>No comments , yet</p>
+                    </div>
+                </div>
+                {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script type="text/javascript">
+
+    function triggerAddComment() {
+        var comment = "";
+        var post_id = {{ post.id }};
+        comment = document.getElementById('id_comment_input').value;
+        addComment(post_id, comment);
+    }
+
+</script>
+
+{% include 'blog/comment/create.html' %}
+{#% include 'blog/comment/edit.html' %#}
+
+{% endblock %}
